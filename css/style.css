@@ -14,6 +14,10 @@
   --accent-ink: #0f1a15;
   --warn: #e3ae6f;         /* amber: early / caution */
   --bad: #db7f73;          /* soft red: late / not clean */
+  --gold: #e6c27a;         /* mastered */
+  --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+  --spring: cubic-bezier(.34,1.56,.64,1);
+  --ease-out: cubic-bezier(.2,.7,.2,1);
   --radius: 16px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -35,9 +39,9 @@ button { touch-action: manipulation; cursor: pointer; }
 
 /* ---------- layout ---------- */
 #view { max-width: 640px; margin: 0 auto; padding: 16px; }
-h1 { font-size: 28px; font-weight: 650; margin: 8px 0 16px; letter-spacing: -0.01em; }
+h1 { font-family: var(--serif); font-size: 34px; font-weight: 600; margin: 8px 0 16px; letter-spacing: -0.01em; }
 h2 { font-size: 15px; font-weight: 600; margin: 24px 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-h3 { font-size: 18px; margin: 0 0 4px; font-weight: 600; }
+h3 { font-family: var(--serif); font-size: 21px; margin: 0 0 4px; font-weight: 600; }
 p { margin: 0 0 10px; }
 .muted { color: var(--muted); }
 .small { font-size: 14px; }
@@ -59,7 +63,14 @@ p { margin: 0 0 10px; }
   border-radius: 12px; padding: 12px 16px; min-height: 48px;
   font-weight: 550; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 }
-.btn:active { transform: scale(0.98); }
+.btn, .icon-btn, .card.tap, .judge button, #tabs button { transition: transform .25s var(--spring), box-shadow .25s, background .2s, border-color .2s; position: relative; }
+.btn:active, .icon-btn:active, .card.tap:active { transform: scale(0.95); }
+.judge button:active { transform: scale(0.94); }
+@media (hover: hover) {
+  .btn:hover, .icon-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+  .card.tap:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+  .btn::after, .icon-btn::after { content: ''; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
+}
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 .btn.danger { color: var(--bad); }
 .btn.ghost { background: transparent; }
@@ -106,8 +117,10 @@ input[type=range] { width: 100%; accent-color: var(--accent); height: 36px; }
   flex: 1; background: none; border: 0; padding: 10px 0 12px; min-height: 60px;
   color: var(--muted); font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 3px;
 }
-#tabs button .ic { font-size: 21px; line-height: 1; }
-#tabs button.on { color: var(--accent); }
+#tabs button .ic { width: 24px; height: 24px; transition: transform .3s var(--spring); }
+#tabs button:active .ic { transform: scale(.85); }
+#tabs button.on .ic { transform: translateY(-2px); }
+#tabs button.on { color: var(--accent); font-weight: 600; }
 
 /* ---------- metronome view ---------- */
 .bpm-big { font-size: 84px; font-weight: 300; text-align: center; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
@@ -131,16 +144,17 @@ input[type=range] { width: 100%; accent-color: var(--accent); height: 36px; }
 .coach-top .timers b { color: var(--text); font-weight: 600; }
 .coach-main { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; gap: 6px; max-width: 560px; width: 100%; margin: 0 auto; padding: 8px 0; }
 .coach-piece { color: var(--muted); font-size: 16px; }
-.coach-section { font-size: 30px; font-weight: 650; line-height: 1.15; }
+.coach-section { font-family: var(--serif); font-size: 32px; font-weight: 600; line-height: 1.15; }
 .coach-tempo { display: flex; align-items: center; gap: 18px; margin: 10px 0 2px; }
 .coach-tempo .bpm { font-size: 64px; font-weight: 300; font-variant-numeric: tabular-nums; line-height: 1; background: none; border: 0; padding: 0; }
 .coach-tempo .bpm small { font-size: 16px; color: var(--muted); font-weight: 500; }
-.pulse { width: 20px; height: 20px; border-radius: 50%; background: var(--surface-2); margin: 8px auto; transition: background .05s, transform .05s; }
-.pulse.on { background: var(--text); transform: scale(1.5); }
-.pulse.on.accent { background: var(--accent); }
+.pulse { width: 44px; height: 44px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--line); margin: 12px auto; transition: background .05s, transform .05s, box-shadow .05s; }
+.pulse.on { background: var(--text); border-color: var(--text); transform: scale(1.15); box-shadow: 0 0 24px rgba(236,232,222,.35); }
+.pulse.on.accent { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 55%, transparent); }
 .pulse.silent { outline: 2px dashed var(--line); outline-offset: 4px; }
-.streak { font-size: 40px; letter-spacing: 10px; line-height: 1; color: var(--accent); margin: 8px 0 4px; }
-.streak .off { color: var(--line); }
+.streak { display: flex; gap: 14px; justify-content: center; margin: 10px 0 6px; }
+.streak i { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid var(--line); transition: background .25s, border-color .25s; }
+.streak i.on { background: var(--accent); border-color: var(--accent); }
 .status { font-size: 16px; color: var(--muted); min-height: 24px; }
 .rule { font-size: 14px; color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; padding: 8px 12px; margin-top: 8px; }
 .message { font-size: 18px; font-weight: 600; min-height: 26px; }
@@ -195,3 +209,54 @@ input[type=range] { width: 100%; accent-color: var(--accent); height: 36px; }
 }
 #toast.show { opacity: 1; }
 audio { width: 100%; margin-top: 6px; }
+
+/* =====================================================================
+ * Kora Co feel (v2) — see js/fx.js. data-motion on <html>: lively | calm | off
+ * ===================================================================== */
+.stat { font-size: 30px; font-weight: 650; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat small { font-size: 15px; font-weight: 500; color: var(--muted); }
+.cap { font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+
+footer.brand { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 28px 0 8px; color: var(--muted); font-size: 12px; letter-spacing: .04em; opacity: .7; }
+footer.brand img { width: 18px; height: auto; }
+
+/* screen enter: children rise in, staggered */
+#view.enter > * { animation: rise .5s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 45ms); }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* modal pop */
+.modal { animation: modalIn .3s var(--ease-out) both; }
+@keyframes modalIn { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
+#toast { transition: opacity .25s, transform .3s var(--spring); transform: translate(-50%, 10px); }
+#toast.show { transform: translate(-50%, 0); }
+
+/* tap ripple */
+.ripple { position: fixed; z-index: 100; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; pointer-events: none;
+  background: rgba(255,255,255,.22); animation: ripple .6s ease-out forwards; }
+.ripple.dark { background: rgba(0,0,0,.18); }
+@keyframes ripple { from { transform: scale(.4); opacity: 1; } to { transform: scale(5.5); opacity: 0; } }
+
+/* progress bars: a soft band of light now and then */
+.bar > i { position: relative; overflow: hidden; }
+.bar > i::after { content: ''; position: absolute; inset: 0; width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  transform: translateX(-120%); animation: sweep 5s ease-in-out infinite; }
+@keyframes sweep { 0%, 70% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
+
+/* coach moments (fired by celebrate() in app.js, only after a tap) */
+.pop { animation: pop .45s var(--spring); }
+@keyframes pop { 0% { transform: scale(.6); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
+.shake { animation: shake .35s ease-in-out; }
+@keyframes shake { 0%,100% { transform: none; } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.flash { animation: flash .9s ease-out; }
+@keyframes flash { 0% { color: var(--accent); text-shadow: 0 0 28px color-mix(in srgb, var(--accent) 70%, transparent); transform: scale(1.08); } 100% { color: inherit; text-shadow: none; transform: none; } }
+.spark { position: fixed; z-index: 90; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; pointer-events: none;
+  animation: spark .85s var(--ease-out) forwards; }
+@keyframes spark { from { transform: translate(0,0) scale(var(--s)); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
+
+/* motion levels */
+html[data-motion="calm"] .bar > i::after { display: none; }
+html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+.pop-soft { animation: popSoft .4s var(--spring); }
+@keyframes popSoft { 0% { transform: scale(.94); opacity: .4; } 60% { transform: scale(1.04); } 100% { transform: none; opacity: 1; } }

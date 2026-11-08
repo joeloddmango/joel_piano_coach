@@ -12,6 +12,7 @@
  * Overlay: the coach (#coach) — the full-screen clean-rep focus view.
  * ===================================================================== */
 
+import * as fx from './fx.js';
 import { state, save, uid, dayStr, findSection, sectionLabel, replaceState, validateImport,
          requestPersistence, getDevice, setDevice, normalizeSection } from './store.js';
 import { recordRep, setTempo, dailyGoal, isDoneToday, progress, addPracticeSeconds, currentStreak, ensureToday } from './coach.js';
@@ -27,6 +28,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const beatsOf = ts => Math.max(1, Math.min(12, parseInt(String(ts).split('/')[0], 10) || 4));
 const fmtTime = sec => { sec = Math.max(0, Math.round(sec)); const m = Math.floor(sec / 60), s = sec % 60; return `${m}:${String(s).padStart(2, '0')}`; };
+const minsHtml = sec => sec < 60 ? `${Math.round(sec)}<small>s</small>` : `<span data-count="${Math.round(sec / 60)}">${Math.round(sec / 60)}</span> <small>min</small>`;
 const fmtMin = sec => sec < 60 ? `${Math.round(sec)}s` : `${Math.round(sec / 60)} min`;
 const TIME_SIGS = ['2/4', '3/4', '4/4', '5/4', '6/8', '7/8', '9/8', '12/8'];
 const GRIDS = [{ id: 1, label: 'Quarter notes' }, { id: 2, label: '8th notes' }, { id: 3, label: 'Triplets' }, { id: 4, label: '16th notes' }];
@@ -106,13 +108,20 @@ async function showForm(title, fields, submit = 'Save') {
 /* =====================================================================
  * MAIN SCREENS
  * ===================================================================== */
+let lastScreen = null;   // play the enter animation only when the screen changes
 function render() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
   const v = $('#view');
   const screens = { today: viewToday, pieces: viewPieces, piece: viewPiece, metronome: viewMetronome, log: viewLog, settings: viewSettings };
-  v.innerHTML = (screens[ui.tab] || viewToday)();
+  v.innerHTML = (screens[ui.tab] || viewToday)() + footerHtml();
+  const screenKey = ui.tab + (ui.tab === 'piece' ? ui.pieceId : '');
+  if (screenKey !== lastScreen) { fx.enter(v); fx.countUps(v); lastScreen = screenKey; }
   if (ui.tab === 'log') fillRecordings();
   if (ui.tab === 'metronome') syncMetroDots();
+}
+
+function footerHtml() {
+  return `<footer class="brand"><img src="icons/kora-white.png" alt="" width="22" height="25"><span>Piano Coach · Kora Co</span></footer>`;
 }
 
 /* ---------------- Today ---------------- */
@@ -136,7 +145,6 @@ function viewToday() {
     const mins = ui.planMinutes ?? state.settings.sessionMinutes;
     planHtml = `<div class="card">
       <h3>Plan today’s session</h3>
-      <p class="muted small">Warm-up first, then the sections furthest from target and least recently practiced.</p>
       <div class="row" style="margin:12px 0">
         <button class="icon-btn" data-act="plan-min" data-d="-15">−</button>
         <div class="grow" style="text-align:center"><span style="font-size:34px;font-weight:600">${mins}</span> <span class="muted">min</span></div>
@@ -152,8 +160,8 @@ function viewToday() {
   return `<h1>Today</h1>
     <p class="muted" style="margin-top:-10px">${esc(date)}</p>
     <div class="row" style="margin:16px 0">
-      <div class="card grow" style="margin:0"><div class="muted small">Streak</div><div style="font-size:26px;font-weight:600">${streak} day${streak === 1 ? '' : 's'}</div></div>
-      <div class="card grow" style="margin:0"><div class="muted small">Practiced today</div><div style="font-size:26px;font-weight:600">${fmtMin(today ? today.seconds : 0)}</div></div>
+      <div class="card grow" style="margin:0"><div class="cap">Streak</div><div class="stat"><span data-count="${streak}">${streak}</span> <small>day${streak === 1 ? '' : 's'}</small></div></div>
+      <div class="card grow" style="margin:0"><div class="cap">Practiced today</div><div class="stat">${minsHtml(today ? today.seconds : 0)}</div></div>
     </div>
     ${planHtml}
     ${quickListHtml()}`;
@@ -252,7 +260,7 @@ function viewMetronome() {
         <select data-setting="metroTimeSig">${TIME_SIGS.map(t => `<option ${t === s.metroTimeSig ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
       ${clickSettingsHtml()}
     </div>
-    <p class="muted small">Tip: wired earphones keep the click in time. Bluetooth earbuds add a delay (often 150–300 ms) that makes the click feel late.</p>`;
+    <p class="muted small">Use <b>wired</b> earphones. Bluetooth makes the click late.</p>`;
 }
 
 /** Sound / subdivision / accent / gap / volume — shared by Metronome screen and the coach’s “Click” sheet. */
@@ -333,8 +341,8 @@ function viewLog() {
   const streak = currentStreak();
   return `<h1>Practice log</h1>
     <div class="row" style="margin-bottom:12px">
-      <div class="card grow" style="margin:0"><div class="muted small">Streak</div><div style="font-size:26px;font-weight:600">${streak} day${streak === 1 ? '' : 's'}</div></div>
-      <div class="card grow" style="margin:0"><div class="muted small">This month</div><div style="font-size:26px;font-weight:600">${fmtMin(monthSec)}</div></div>
+      <div class="card grow" style="margin:0"><div class="cap">Streak</div><div class="stat"><span data-count="${streak}">${streak}</span> <small>day${streak === 1 ? '' : 's'}</small></div></div>
+      <div class="card grow" style="margin:0"><div class="cap">This month</div><div class="stat">${minsHtml(monthSec)}</div></div>
     </div>
     <div class="card">
       <div class="row" style="margin-bottom:10px"><button class="btn sm ghost" data-act="cal" data-d="-1">‹</button>
@@ -404,7 +412,8 @@ function viewSettings() {
       ${numberRow('spotEvery', 'Keep about 1 in every … clean reps', 1, 20)}
       ${numberRow('keepRecordings', 'Recordings to keep', 1, 20)}
     </div>
-    <h2>Screen</h2><div class="card">${toggleRow('wakeLock', 'Keep screen awake while practicing')}</div>
+    <h2>Screen</h2><div class="card">${toggleRow('wakeLock', 'Keep screen awake while practicing')}
+      <div class="setting"><span class="lbl">Motion<div class="small muted">Calm = no sparkles. Your phone’s Reduce Motion turns it off.</div></span><select data-setting="motion">${[['lively', 'Lively'], ['calm', 'Calm'], ['off', 'Off']].map(([v, l]) => `<option value="${v}" ${state.settings.motion === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
     <h2>Your data</h2><div class="card stack">
       <p class="small muted">Everything is saved on this device only. Use Export on one device and Import on the other to move your data (recordings and mic calibration stay on each device).</p>
       <button class="btn block" data-act="export">Export backup (.json file)</button>
@@ -412,7 +421,7 @@ function viewSettings() {
       <button class="btn block" data-act="import">Import backup…</button>
       <button class="btn block danger ghost" data-act="reset">Erase all data</button>
     </div>
-    <p class="small muted" style="text-align:center;margin-top:20px">Piano Coach v1</p>`;
+    <p class="small muted" style="text-align:center;margin-top:20px">Version 2</p>`;
 }
 
 /* =====================================================================
@@ -464,7 +473,7 @@ function renderCoach() {
   const sess = activeSessionForToday();
   const micOn = s.micCheck;
   const goal = dailyGoal(sec);
-  const dots = '●'.repeat(Math.min(sec.streak, s.cleanTarget)) + `<span class="off">${'○'.repeat(Math.max(0, s.cleanTarget - sec.streak))}</span>`;
+  const dots = Array.from({ length: s.cleanTarget }, (_, i) => `<i class="${i < sec.streak ? 'on' : ''}"></i>`).join('');
   let status;
   if (sec.mastered) status = 'Mastered ✓ — keep it fresh, or move on.';
   else if (isDoneToday(sec)) status = 'Done for today ✓ — tomorrow starts here.';
@@ -493,9 +502,9 @@ function renderCoach() {
       <div class="muted small">Target ${sec.targetBpm} · today’s goal ${goal}</div>
       <div class="pulse" id="c-pulse"></div>
       <div class="muted small" id="c-countin" style="min-height:20px"></div>
-      <div class="streak" aria-label="Clean streak ${sec.streak} of ${s.cleanTarget}">${dots}</div>
+      <div class="streak" id="c-streak" aria-label="Clean streak ${sec.streak} of ${s.cleanTarget}">${dots}</div>
       <div class="status">${esc(status)}</div>
-      <div class="message ${coach.msgCls}">${esc(coach.message)}</div>
+      <div class="message ${coach.msgCls}" id="c-msg">${esc(coach.message)}</div>
       ${coach.result ? timingHtml(coach.result) : ''}
       ${mic.active && coach.repActive ? '<div class="level" id="c-level"><i></i></div><div class="small muted">mic level</div>' : ''}
       <div class="rule">Clean = no stopping, no wrong notes, steady with the click. <b>If in doubt, it’s not clean.</b></div>
@@ -663,12 +672,34 @@ async function judge(clean) {
   if (coach.pendingRender) coach.pendingRender = false;
   if ((ev.type === 'doneToday' || ev.type === 'mastered') && activeSessionForToday()) coach.banner = ev.type === 'mastered' ? 'Mastered! Move to the next block?' : 'Done for today! Move to the next block?';
   renderCoach();
+  celebrate(ev.type);
 
   if (ev.type === 'suggestDrop') {
     const ok = await confirmModal('Slow down a little?', `That’s ${s.failLimit} not-clean reps in a row at ${section.currentBpm} BPM. Dropping about ${s.dropPercent}% to ${ev.to} BPM usually gets you clean again quickly.`, `Drop to ${ev.to}`);
     if (ok) { setTempo(section, ev.to); coach.message = `Tempo set to ${ev.to} BPM. Fresh start.`; coach.msgCls = ''; }
     else section.failStreak = 0;
     save(); renderCoach();
+  }
+}
+
+/* Small, earned moments: only right after a Clean / Not clean tap, never while playing. */
+function celebrate(type) {
+  const streakEl = $('#c-streak'), msg = $('#c-msg'), bpm = $('#coach .bpm');
+  if (type === 'streak') {
+    const lit = streakEl && streakEl.querySelectorAll('i.on');
+    if (lit && lit.length) fx.replay(lit[lit.length - 1], 'pop');
+    fx.replay(msg, 'pop-soft');
+  } else if (type === 'miss') {
+    fx.replay(streakEl, 'shake');
+  } else if (type === 'raised' || type === 'doneToday') {
+    fx.replay(bpm, 'flash');
+    fx.burst(streakEl, type === 'raised' ? 18 : 26);
+    fx.replay(msg, 'pop-soft');
+  } else if (type === 'mastered') {
+    fx.replay(bpm, 'flash');
+    fx.burst(bpm, 30, 'var(--gold)');
+    setTimeout(() => fx.burst(streakEl, 22), 180);
+    fx.replay(msg, 'pop-soft');
   }
 }
 
@@ -1008,6 +1039,7 @@ function onSettingInput(e) {
   save();
   // side effects
   if (key === 'sensitivity') mic.setSensitivity(v);
+  if (key === 'motion') fx.setMotion(v);
   if (key === 'gapEnabled') document.querySelectorAll('[data-gap-row]').forEach(r => r.hidden = !v);
   if (key === 'metroTimeSig') syncMetroDots();
   if (key === 'wakeLock' && !v) keepAwake(false);
@@ -1026,6 +1058,7 @@ document.addEventListener('input', e => { if (e.target.type === 'range') onSetti
  * START-UP
  * ===================================================================== */
 requestPersistence();
+fx.setMotion(state.settings.motion);
 render();
 
 // Offline support (only works over https:// or localhost).

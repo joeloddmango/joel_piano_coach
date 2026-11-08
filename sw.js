@@ -8,12 +8,12 @@
  * When you change the app's files, bump VERSION so old caches are cleared.
  * ===================================================================== */
 
-const VERSION = 'piano-coach-v1';
+const VERSION = 'piano-coach-v2';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'js/app.js', 'js/audio.js', 'js/coach.js', 'js/metronome.js', 'js/mic.js',
-  'js/onset-worklet.js', 'js/planner.js', 'js/recorder.js', 'js/store.js', 'js/timing.js',
-  'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
+  'js/onset-worklet.js', 'js/fx.js', 'js/planner.js', 'js/recorder.js', 'js/store.js', 'js/timing.js',
+  'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/kora-white.png',
   ...['one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'].map(w => `sounds/${w}.wav`),
 ];
 

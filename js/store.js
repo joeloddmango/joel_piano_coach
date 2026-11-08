@@ -65,6 +65,7 @@ export const DEFAULT_SETTINGS = {
   keepRecordings: 5,
   // misc
   wakeLock: true,
+  motion: 'lively',      // lively | calm | off (see fx.js)
 };
 
 export function uid() {
